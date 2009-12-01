@@ -34,6 +34,7 @@ class Console
 	ofTrueTypeFont* usedFont;
 	char lastChar;
 	
+		
 	//keyboard accelerator data
 	char tempChar;
 	int level; //should be init to 0, level from left to right 0 1 2 0 1 2 etc... while parsing
@@ -63,8 +64,12 @@ class Console
 	string getWorkingPath(); //returns path of the running executable(self).
 	
 	//keyboard accelerator functions
-	int loadToMem(string filename);
+	int loadAccelFile(string filename);
 	int processKey(char pressed);
+	//set loading functionality
+	int loadPresetFile(string filename);
+	int savePresetFile(string filename);
+	void iterateLoadedItems();
 	
 	
 	//global synth/param vars set from console
@@ -80,7 +85,13 @@ class Console
 	int currentSliderTab; 
 	int agentResets;  
 	float attractSlider; 
-	
+	bool isPutIssued; //true if "put x y" is given as command
+	int putX, putY; //x y arguments for the put command.
+	bool isLoadingPreset;
+	int numPresetItems;
+	int processedPresetItems;
+	vector <string>loadedCommands;
+	vector <string>issuedCommands; //log of all commands executed plus put x y messages for objects created with mouse click (only initial position)
 };
 
 #endif

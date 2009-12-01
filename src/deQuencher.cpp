@@ -224,6 +224,19 @@ void deQuencher::draw(){
 		
 		
 		deleteFlag = false;
+		
+		
+	}
+	
+	if(myConsole->isLoadingPreset)
+	{
+		myConsole->iterateLoadedItems();
+	}
+	
+	if(myConsole->isPutIssued == true)
+	{
+		this->addAgent(myConsole->putX, myConsole->putY);
+		myConsole->isPutIssued = false;		
 	}
 	
 	if(dumpFlag)
@@ -443,35 +456,7 @@ void deQuencher::mousePressed(int x, int y, int button){
 		case 0:
 			if(this->mouseRegion() == 0)
 			{
-				unsigned int rndColor = ofRandom(0, 16777215);
-				switch(myConsole->agentType % 6)
-				{
-					case 0://if param agent
-						myAgents->push_back(new pAgent(rndColor, myConsole->agentParam, myConsole->maxAttract, myConsole->agentResets, &franklin, myConsole, myMSliders, myAgents));
-						break;
-					case 1://if synth agent
-						myAgents->push_back(new sAgent(rndColor, myConsole->aSynthName, myServer, &franklin, myConsole, myMSliders, myAgents));
-						break;
-					case 2:
-						myAgents->push_back(new tAgent(rndColor, myConsole->agentParam, myConsole->maxAttract, &franklin, myConsole, myMSliders, myAgents));
-						break;
-					case 3:
-						myAgents->push_back(new fAgent(rndColor, myConsole->aSynthName, myServer, myConsole->maxAttract, &franklin, myConsole, myMSliders, myAgents));
-						break;
-					case 4:
-						myAgents->push_back(new cAgent(rndColor, myConsole->aSynthName, myServer, myConsole->maxAttract, &franklin, myConsole, myMSliders, myAgents));
-						break;
-					case 5:
-						myAgents->push_back(new frsAgent(rndColor, myConsole->aSynthName, myServer, &franklin, myConsole, myMSliders, myAgents, runningPath));
-						break;
-				}
-				myAgents->at(myAgents->size() - 1)->agIndex = myAgents->size() - 1;
-				myAgents->at(myAgents->size() - 1)->record(x, y);
-				
-				myMSliders->at(0)->addSlide(rndColor, 0.5);
-				myMSliders->at(1)->addSlide(rndColor, 0.5);
-				myMSliders->at(2)->addSlide(rndColor, 1); //frame clipping slider
-				myMSliders->at(3)->addSlide(rndColor, 0);
+				this->addAgent(x, y);
 			} 
 			
 			mouseDraggingL = true;
@@ -552,5 +537,45 @@ void deQuencher::switchTab(int direction) //switch multislider tabs direction -1
 	myConsole->slTabUpdate(currentSliderTab);
 	
 	
+}
+
+void deQuencher::addAgent(int x, int y)
+{
+	string fakedCommand = "put "; //constructing a fake put command for preset saving.
+	stringstream fakeX, fakeY;
+	fakeX << x; fakeY << y;
+	fakedCommand = fakedCommand + fakeX.str() + " " + fakeY.str();
+	myConsole->issuedCommands.push_back(fakedCommand);
+	
+	unsigned int rndColor = ofRandom(0, 16777215);
+	
+	switch(myConsole->agentType % 6)
+	{
+	case 0://if param agent
+	myAgents->push_back(new pAgent(rndColor, myConsole->agentParam, myConsole->maxAttract, myConsole->agentResets, &franklin, myConsole, myMSliders, myAgents));
+	break;
+	case 1://if synth agent
+	myAgents->push_back(new sAgent(rndColor, myConsole->aSynthName, myServer, &franklin, myConsole, myMSliders, myAgents));
+	break;
+	case 2:
+	myAgents->push_back(new tAgent(rndColor, myConsole->agentParam, myConsole->maxAttract, &franklin, myConsole, myMSliders, myAgents));
+	break;
+	case 3:
+	myAgents->push_back(new fAgent(rndColor, myConsole->aSynthName, myServer, myConsole->maxAttract, &franklin, myConsole, myMSliders, myAgents));
+	break;
+	case 4:
+	myAgents->push_back(new cAgent(rndColor, myConsole->aSynthName, myServer, myConsole->maxAttract, &franklin, myConsole, myMSliders, myAgents));
+	break;
+	case 5:
+	myAgents->push_back(new frsAgent(rndColor, myConsole->aSynthName, myServer, &franklin, myConsole, myMSliders, myAgents, runningPath));
+	break;
+	}
+	myAgents->at(myAgents->size() - 1)->agIndex = myAgents->size() - 1;
+	myAgents->at(myAgents->size() - 1)->record(x, y);
+
+	myMSliders->at(0)->addSlide(rndColor, 0.5);
+	myMSliders->at(1)->addSlide(rndColor, 0.5);
+	myMSliders->at(2)->addSlide(rndColor, 1); //frame clipping slider
+	myMSliders->at(3)->addSlide(rndColor, 0);
 }
 

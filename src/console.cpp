@@ -37,6 +37,11 @@ Console::Console(int argX, int argY, int argWidth, int argHeight, ofTrueTypeFont
 	agentResets = 1; 
 	attractSlider = 0.5; 
 	
+	isPutIssued = false;
+	isLoadingPreset = false;
+	numPresetItems = 0; //number of commands loaded from preset file
+	processedPresetItems = 0;
+	
 	level = 0;
 
 	
@@ -91,6 +96,7 @@ void Console::parseReturn()
 	
 	tempStr2 = consData.substr(12, 1024); //trim the prompt "dequencher:>"
 	
+	
 	stringstream stream(tempStr2);
 	
 				
@@ -100,6 +106,8 @@ void Console::parseReturn()
 		splitCommand.push_back(tempStr);
 	}
 	
+	if((splitCommand[0] != "loadset") && (splitCommand[0] != "saveset"))
+		issuedCommands.push_back(tempStr2);
 	
 	if (splitCommand.size() == 0)
     {
@@ -109,6 +117,14 @@ void Console::parseReturn()
 		
 		switch(splitCommand.size())
 		{
+			case 3:
+				if(splitCommand[0] == "put")
+				{
+					putX = atoi(splitCommand[1].c_str());
+					putY = atoi(splitCommand[2].c_str());
+					isPutIssued = true; 
+				}
+				break;
 			case 2:
 				if(splitCommand[0] == "/point")
 				{
@@ -227,10 +243,29 @@ void Console::parseReturn()
 					string tempFile = wPath + "/" + splitCommand[1];
 					
 					//LOAD THE FILE!
-					if(this->loadToMem(tempFile) == 0)
+					if(this->loadAccelFile(tempFile) == 0)
 						statusText = "Keyboard accelerators file loaded ok...";
 					else
 						statusText = "Failed to load file";
+				} else if(splitCommand[0] == "loadset")
+				{
+					string wPath = getWorkingPath();
+					wPath = wPath.substr(0, wPath.length() - CROPPATH);
+					
+					string tempFile = wPath + "/" + splitCommand[1];
+					
+					//LOAD THE FILE!
+					if(this->loadPresetFile(tempFile) == 0)
+						statusText = "Preset file loaded ok...";
+					else
+						statusText = "Failed to load preset file";
+				} else if(splitCommand[0] == "saveset")
+				{
+					string wPath = getWorkingPath();
+					wPath = wPath.substr(0, wPath.length() - CROPPATH);
+					
+					string tempFile = wPath + "/" + splitCommand[1];
+					this->savePresetFile(tempFile);
 				}
 				
 				else { this->failCommand(); }
@@ -378,7 +413,7 @@ void Console::slTabUpdate(int viewNo)
 
 }
 
-int Console::loadToMem(string filename)
+int Console::loadAccelFile(string filename)
 {
 	keyBinds.clear();
 	sTypes.clear();
@@ -452,6 +487,69 @@ int Console::loadToMem(string filename)
 	
 	inFile.close();
 	return 0;
+}
+
+int Console::loadPresetFile(string filename)
+{
+	string tempLine = "";
+	char temp;
+	
+	int numCommands = 0;
+	
+	ifstream inFile (filename.c_str());
+	if(inFile.is_open() == false)
+		return 1;
+	
+	do
+	{
+		while(!inFile.eof())
+		{
+			temp = (char)inFile.get();
+			if((temp == '\n') || inFile.eof())
+				break;
+			tempLine = tempLine + temp;
+		};
+		if(tempLine.length() > 1) //handling the ending for with or without endline character
+		{
+			loadedCommands.push_back(tempLine.c_str());
+			tempLine = "";			
+		}
+		
+	} while(!inFile.eof());
+	
+	numPresetItems = loadedCommands.size();
+	isLoadingPreset = true;
+}
+
+int Console::savePresetFile(string filename)
+{
+	ofstream outFile(filename.c_str());
+	if(outFile.is_open() == false)
+		return 1;
+	
+	for(int i = 0; i < issuedCommands.size(); i++)
+	{
+		outFile << issuedCommands.at(i) << endl;
+	};
+	outFile.close();
+	
+}
+
+void Console::iterateLoadedItems()
+{
+	if(numPresetItems != processedPresetItems)
+	{
+		consData = consData + loadedCommands[processedPresetItems];
+		
+		this->parseReturn();
+		processedPresetItems++;	
+	} else
+	{
+		loadedCommands.clear();
+		isLoadingPreset = false;
+		processedPresetItems = 0;
+	};
+	
 }
 
 int Console::processKey(char pressed)

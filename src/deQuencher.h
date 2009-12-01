@@ -64,6 +64,7 @@ class deQuencher : public ofSimpleApp{
 		//-------------------
 		int mouseRegion(); //returns current anchor region of mouse. 0 is canvas, 1 is multislider, 2 is other(console).
 		void switchTab(int direction);
+		void addAgent(int x, int y);
 	
 		ofxOscReceiver oscReceiver;
 				
